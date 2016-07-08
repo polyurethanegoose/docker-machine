@@ -106,11 +106,6 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:   "digitalocean-userdata",
 			Usage:  "path to file with cloud-init user-data",
 		},
-		mcnflag.BoolFlag{
-			EnvVar: "DIGITALOCEAN_RETRY_ON_RATE_LIMIT",
-			Name:   "digitalocean-retry-on-rate-limit",
-			Usage:  "retry all operations if the rate limit is hit",
-		},
 	}
 }
 
@@ -147,7 +142,6 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.SSHUser = flags.String("digitalocean-ssh-user")
 	d.SSHPort = flags.Int("digitalocean-ssh-port")
 	d.SSHKeyFingerprint = flags.String("digitalocean-ssh-key-fingerprint")
-	d.RetryOnRateLimit = flags.Bool("digitalocean-retry-on-rate-limit")
 	d.SetSwarmConfigFromFlags(flags)
 
 	if d.AccessToken == "" {
@@ -450,9 +444,6 @@ func (d *Driver) isRateLimited(resp *godo.Response) bool {
 }
 
 func (d *Driver) limitRate(resp *godo.Response, isStatus ...bool) bool {
-	if !d.RetryOnRateLimit {
-		return false
-	}
 	if d.isRateLimited(resp) {
 		var wait, deviation time.Duration
 
