@@ -38,6 +38,7 @@ func SetSSHClientCreator(creator SSHClientCreator) {
 
 type Host struct {
 	ConfigVersion int
+	LastState     state.State `json:"-"`
 	Driver        drivers.Driver
 	DriverName    string
 	HostOptions   *Options
@@ -103,7 +104,12 @@ func (h *Host) runActionForState(action func() error, desiredState state.State) 
 		return err
 	}
 
-	return mcnutils.WaitFor(drivers.MachineInState(h.Driver, desiredState))
+	if err := mcnutils.WaitFor(drivers.MachineInState(h.Driver, desiredState)); err != nil {
+		return err
+	}
+
+	h.LastState = desiredState
+	return nil
 }
 
 func (h *Host) WaitForDocker() error {
@@ -160,6 +166,8 @@ func (h *Host) Restart() error {
 			return err
 		}
 	}
+
+	h.LastState = state.Running
 
 	return h.WaitForDocker()
 }
@@ -220,4 +228,11 @@ func (h *Host) Provision() error {
 	}
 
 	return provisioner.Provision(*h.HostOptions.SwarmOptions, *h.HostOptions.AuthOptions, *h.HostOptions.EngineOptions)
+}
+
+func (h *Host) UpdateLastState() {
+	lastState, err := h.Driver.GetState()
+	if err == nil {
+		h.LastState = lastState
+	}
 }

@@ -72,6 +72,8 @@ func (s Filestore) Save(host *host.Host) error {
 		return err
 	}
 
+	s.saveToFile([]byte(host.LastState.String()), filepath.Join(hostPath, "last_state"))
+
 	return s.saveToFile(data, filepath.Join(hostPath, "config.json"))
 }
 

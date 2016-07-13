@@ -7,6 +7,14 @@ before_script:
 - apt-get update -yqqq
 - apt-get install -yqqq make
 
+test:
+  stage: test
+  script:
+  - make fmt lint vet test-long
+  tags:
+  - docker
+  - privileged
+
 build:
   stage: build
   script:

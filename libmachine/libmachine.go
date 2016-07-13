@@ -61,6 +61,7 @@ func (api *Client) NewHost(driverName string, rawDriver []byte) (*host.Host, err
 
 	return &host.Host{
 		ConfigVersion: version.ConfigVersion,
+		LastState:     state.None,
 		Name:          driver.GetMachineName(),
 		Driver:        driver,
 		DriverName:    driver.DriverName(),
@@ -135,7 +136,10 @@ func (api *Client) Create(h *host.Host) error {
 	log.Info("Creating machine...")
 
 	if err := api.performCreate(h); err != nil {
+		h.UpdateLastState()
+
 		// Try to save machine when Create fails, it can store some critical information like DropletID
+		// (which in some/most DO failures cases is equal 0 :P)
 		api.Save(h)
 
 		return fmt.Errorf("Error creating machine: %s", err)
@@ -143,6 +147,7 @@ func (api *Client) Create(h *host.Host) error {
 
 	log.Debug("Reticulating splines...")
 
+	h.UpdateLastState()
 	return nil
 }
 
