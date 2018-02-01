@@ -16,34 +16,36 @@ import (
 // Driver is a struct compatible with the docker.hosts.drivers.Driver interface.
 type Driver struct {
 	*drivers.BaseDriver
-	Zone              string
-	MachineType       string
-	MachineImage      string
-	DiskType          string
-	Address           string
-	Network           string
-	Subnetwork        string
-	Preemptible       bool
-	UseInternalIP     bool
-	UseInternalIPOnly bool
-	Scopes            string
-	DiskSize          int
-	Project           string
-	Tags              string
-	UseExisting       bool
-	OpenPorts         []string
+	Zone               string
+	MachineType        string
+	MachineImage       string
+	DiskType           string
+	Address            string
+	Network            string
+	Subnetwork         string
+	AdditionalNetworks string
+	Preemptible        bool
+	UseInternalIP      bool
+	UseInternalIPOnly  bool
+	Scopes             string
+	DiskSize           int
+	Project            string
+	Tags               string
+	UseExisting        bool
+	OpenPorts          []string
 }
 
 const (
-	defaultZone        = "us-central1-a"
-	defaultUser        = "docker-user"
-	defaultMachineType = "n1-standard-1"
-	defaultImageName   = "ubuntu-os-cloud/global/images/ubuntu-1604-xenial-v20170721"
-	defaultScopes      = "https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write"
-	defaultDiskType    = "pd-standard"
-	defaultDiskSize    = 10
-	defaultNetwork     = "default"
-	defaultSubnetwork  = ""
+	defaultZone               = "us-central1-a"
+	defaultUser               = "docker-user"
+	defaultMachineType        = "n1-standard-1"
+	defaultImageName          = "ubuntu-os-cloud/global/images/ubuntu-1604-xenial-v20170721"
+	defaultScopes             = "https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write"
+	defaultDiskType           = "pd-standard"
+	defaultDiskSize           = 10
+	defaultNetwork            = "default"
+	defaultSubnetwork         = ""
+	defaultAdditionalNetworks = ""
 )
 
 // GetCreateFlags registers the flags this driver adds to
@@ -110,6 +112,12 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			EnvVar: "GOOGLE_SUBNETWORK",
 		},
 		mcnflag.StringFlag{
+			Name:   "google-additional-networks",
+			Usage:  "Specify additional networks that should be connected to provisioned vm",
+			Value:  defaultAdditionalNetworks,
+			EnvVar: "GOOGLE_ADDITIONAL_NETWORKS",
+		},
+		mcnflag.StringFlag{
 			Name:   "google-address",
 			Usage:  "GCE Instance External IP",
 			EnvVar: "GOOGLE_ADDRESS",
@@ -150,14 +158,15 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 // NewDriver creates a Driver with the specified storePath.
 func NewDriver(machineName string, storePath string) *Driver {
 	return &Driver{
-		Zone:         defaultZone,
-		DiskType:     defaultDiskType,
-		DiskSize:     defaultDiskSize,
-		MachineType:  defaultMachineType,
-		MachineImage: defaultImageName,
-		Network:      defaultNetwork,
-		Subnetwork:   defaultSubnetwork,
-		Scopes:       defaultScopes,
+		Zone:               defaultZone,
+		DiskType:           defaultDiskType,
+		DiskSize:           defaultDiskSize,
+		MachineType:        defaultMachineType,
+		MachineImage:       defaultImageName,
+		Network:            defaultNetwork,
+		Subnetwork:         defaultSubnetwork,
+		AdditionalNetworks: defaultAdditionalNetworks,
+		Scopes:             defaultScopes,
 		BaseDriver: &drivers.BaseDriver{
 			SSHUser:     defaultUser,
 			MachineName: machineName,
@@ -202,6 +211,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 		d.Address = flags.String("google-address")
 		d.Network = flags.String("google-network")
 		d.Subnetwork = flags.String("google-subnetwork")
+		d.AdditionalNetworks = flags.String("google-additional-networks")
 		d.Preemptible = flags.Bool("google-preemptible")
 		d.UseInternalIP = flags.Bool("google-use-internal-ip") || flags.Bool("google-use-internal-ip-only")
 		d.UseInternalIPOnly = flags.Bool("google-use-internal-ip-only")

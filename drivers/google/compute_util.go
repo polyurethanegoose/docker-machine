@@ -22,23 +22,24 @@ import (
 
 // ComputeUtil is used to wrap the raw GCE API code and store common parameters.
 type ComputeUtil struct {
-	zone              string
-	instanceName      string
-	userName          string
-	project           string
-	diskTypeURL       string
-	address           string
-	network           string
-	subnetwork        string
-	preemptible       bool
-	useInternalIP     bool
-	useInternalIPOnly bool
-	service           *raw.Service
-	zoneURL           string
-	globalURL         string
-	SwarmMaster       bool
-	SwarmHost         string
-	openPorts         []string
+	zone               string
+	instanceName       string
+	userName           string
+	project            string
+	diskTypeURL        string
+	address            string
+	network            string
+	subnetwork         string
+	additionalNetworks string
+	preemptible        bool
+	useInternalIP      bool
+	useInternalIPOnly  bool
+	service            *raw.Service
+	zoneURL            string
+	globalURL          string
+	SwarmMaster        bool
+	SwarmHost          string
+	openPorts          []string
 }
 
 const (
@@ -46,6 +47,12 @@ const (
 	firewallRule      = "docker-machines"
 	dockerPort        = "2376"
 	firewallTargetTag = "docker-machine"
+	networkNameRegexp = "[a-z]([a-z0-9-]{0,62}[a-z0-9])?"
+)
+
+var (
+	networkAndSubnetworkRegexp = fmt.Sprintf("^%s(:(%s)?)?$", networkNameRegexp, networkNameRegexp)
+	networkRegexp              = fmt.Sprintf("^%s$", networkNameRegexp)
 )
 
 // NewComputeUtil creates and initializes a ComputeUtil.
@@ -61,23 +68,24 @@ func newComputeUtil(driver *Driver) (*ComputeUtil, error) {
 	}
 
 	return &ComputeUtil{
-		zone:              driver.Zone,
-		instanceName:      driver.MachineName,
-		userName:          driver.SSHUser,
-		project:           driver.Project,
-		diskTypeURL:       driver.DiskType,
-		address:           driver.Address,
-		network:           driver.Network,
-		subnetwork:        driver.Subnetwork,
-		preemptible:       driver.Preemptible,
-		useInternalIP:     driver.UseInternalIP,
-		useInternalIPOnly: driver.UseInternalIPOnly,
-		service:           service,
-		zoneURL:           apiURL + driver.Project + "/zones/" + driver.Zone,
-		globalURL:         apiURL + driver.Project + "/global",
-		SwarmMaster:       driver.SwarmMaster,
-		SwarmHost:         driver.SwarmHost,
-		openPorts:         driver.OpenPorts,
+		zone:               driver.Zone,
+		instanceName:       driver.MachineName,
+		userName:           driver.SSHUser,
+		project:            driver.Project,
+		diskTypeURL:        driver.DiskType,
+		address:            driver.Address,
+		network:            driver.Network,
+		subnetwork:         driver.Subnetwork,
+		additionalNetworks: driver.AdditionalNetworks,
+		preemptible:        driver.Preemptible,
+		useInternalIP:      driver.UseInternalIP,
+		useInternalIPOnly:  driver.UseInternalIPOnly,
+		service:            service,
+		zoneURL:            apiURL + driver.Project + "/zones/" + driver.Zone,
+		globalURL:          apiURL + driver.Project + "/global",
+		SwarmMaster:        driver.SwarmMaster,
+		SwarmHost:          driver.SwarmHost,
+		openPorts:          driver.OpenPorts,
 	}, nil
 }
 
@@ -248,11 +256,6 @@ func (c *ComputeUtil) createInstance(d *Driver) error {
 				Mode:       "READ_WRITE",
 			},
 		},
-		NetworkInterfaces: []*raw.NetworkInterface{
-			{
-				Network: c.globalURL + "/networks/" + d.Network,
-			},
-		},
 		Tags: &raw.Tags{
 			Items: parseTags(d),
 		},
@@ -265,26 +268,6 @@ func (c *ComputeUtil) createInstance(d *Driver) error {
 		Scheduling: &raw.Scheduling{
 			Preemptible: c.preemptible,
 		},
-	}
-
-	if c.subnetwork != "" {
-		instance.NetworkInterfaces[0].Subnetwork = "projects/" + c.project + "/regions/" + c.region() + "/subnetworks/" + c.subnetwork
-	}
-
-	if !c.useInternalIPOnly {
-		cfg := &raw.AccessConfig{
-			Type: "ONE_TO_ONE_NAT",
-		}
-		instance.NetworkInterfaces[0].AccessConfigs = append(instance.NetworkInterfaces[0].AccessConfigs, cfg)
-	}
-
-	if c.address != "" {
-		staticAddress, err := c.staticAddress()
-		if err != nil {
-			return err
-		}
-
-		instance.NetworkInterfaces[0].AccessConfigs[0].NatIP = staticAddress
 	}
 
 	disk, err := c.disk()
@@ -316,6 +299,79 @@ func (c *ComputeUtil) createInstance(d *Driver) error {
 	}
 
 	return c.uploadSSHKey(instance, d.GetSSHKeyPath())
+}
+
+// prepareNetworkingInterfaces configures network interfaces that should be set for the instance
+func (c *ComputeUtil) prepareNetworkingInterfaces(d *Driver, instance *raw.Instance) error {
+	networkDefinitionRegexp, err := regexp.Compile(networkRegexp)
+	if err != nil {
+		return err
+	}
+
+	if !networkDefinitionRegexp.MatchString(d.Network) {
+		return fmt.Errorf("invalid network name: '%s'", d.Network)
+	}
+
+	instance.NetworkInterfaces = []*raw.NetworkInterface{
+		{
+			Network: c.globalURL + "/networks/" + d.Network,
+		},
+	}
+
+	if c.subnetwork != "" {
+		instance.NetworkInterfaces[0].Subnetwork = "projects/" + c.project + "/regions/" + c.region() + "/subnetworks/" + c.subnetwork
+	}
+
+	if !c.useInternalIPOnly {
+		cfg := &raw.AccessConfig{
+			Type: "ONE_TO_ONE_NAT",
+		}
+		instance.NetworkInterfaces[0].AccessConfigs = append(instance.NetworkInterfaces[0].AccessConfigs, cfg)
+	}
+
+	if c.address != "" {
+		staticAddress, err := c.staticAddress()
+		if err != nil {
+			return err
+		}
+
+		instance.NetworkInterfaces[0].AccessConfigs[0].NatIP = staticAddress
+	}
+
+	return c.configureAdditionalNetworks(d, instance)
+}
+
+// configureAdditionalNetworks adds configuration of additional network interfaces
+func (c *ComputeUtil) configureAdditionalNetworks(d *Driver, instance *raw.Instance) error {
+	additionalNetworkDefinitionRegexp, err := regexp.Compile(networkAndSubnetworkRegexp)
+	if err != nil {
+		return err
+	}
+
+	if d.AdditionalNetworks != "" {
+		for _, additionalNetworkDefinition := range strings.Split(d.AdditionalNetworks, ",") {
+			if additionalNetworkDefinition == "" {
+				continue
+			}
+
+			if !additionalNetworkDefinitionRegexp.MatchString(additionalNetworkDefinition) {
+				return fmt.Errorf("invalid definition of one of additional networks: '%s'", additionalNetworkDefinition)
+			}
+
+			additionalNetwork := strings.Split(additionalNetworkDefinition, ":")
+			networkInterface := &raw.NetworkInterface{
+				Network: c.globalURL + "/networks/" + additionalNetwork[0],
+			}
+
+			if len(additionalNetwork) > 1 {
+				networkInterface.Subnetwork = "projects/" + c.project + "/regions/" + c.region() + "/subnetworks/" + additionalNetwork[1]
+			}
+
+			instance.NetworkInterfaces = append(instance.NetworkInterfaces, networkInterface)
+		}
+	}
+
+	return nil
 }
 
 // configureInstance configures an existing instance for use with Docker Machine.
