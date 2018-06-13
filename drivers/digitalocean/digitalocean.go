@@ -267,8 +267,8 @@ func (d *Driver) Create() (err error) {
 	d.DropletID = newDroplet.ID
 	try := 0
 
-	// On average it taks at least 5 seconds for assigning IP address
-	time.Sleep(5 * time.Second)
+	// On average it takes at least 5 seconds for assigning IP address
+	time.Sleep(15 * time.Second)
 
 	log.Info("Waiting for IP address to be assigned to the Droplet...")
 	for {
