@@ -16,6 +16,7 @@ import (
 	"github.com/docker/machine/libmachine"
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/engine"
+	"github.com/docker/machine/libmachine/bootstrap"
 	"github.com/docker/machine/libmachine/host"
 	"github.com/docker/machine/libmachine/log"
 	"github.com/docker/machine/libmachine/mcndockerclient"
@@ -33,19 +34,20 @@ const (
 
 var (
 	headers = map[string]string{
-		"Name":          "NAME",
-		"Active":        "ACTIVE",
-		"ActiveHost":    "ACTIVE_HOST",
-		"ActiveSwarm":   "ACTIVE_SWARM",
-		"DriverName":    "DRIVER",
-		"State":         "STATE",
-		"URL":           "URL",
-		"SwarmOptions":  "SWARM_OPTIONS",
-		"Swarm":         "SWARM",
-		"EngineOptions": "ENGINE_OPTIONS",
-		"Error":         "ERRORS",
-		"DockerVersion": "DOCKER",
-		"ResponseTime":  "RESPONSE",
+		"Name":             "NAME",
+		"Active":           "ACTIVE",
+		"ActiveHost":       "ACTIVE_HOST",
+		"ActiveSwarm":      "ACTIVE_SWARM",
+		"DriverName":       "DRIVER",
+		"State":            "STATE",
+		"URL":              "URL",
+		"SwarmOptions":     "SWARM_OPTIONS",
+		"Swarm":            "SWARM",
+		"EngineOptions":    "ENGINE_OPTIONS",
+		"BootstrapOptions": "BOOTSTRAP_OPTIONS",
+		"Error":            "ERRORS",
+		"DockerVersion":    "DOCKER",
+		"ResponseTime":     "RESPONSE",
 	}
 )
 
@@ -60,6 +62,7 @@ type HostListItem struct {
 	SwarmOptions  *swarm.Options
 	Swarm         string
 	EngineOptions *engine.Options
+	BootstrapOptions *bootstrap.Options
 	Error         string
 	DockerVersion string
 	ResponseTime  time.Duration
@@ -377,9 +380,11 @@ func attemptGetHostState(h *host.Host, stateQueryChan chan<- HostListItem) {
 
 	var swarmOptions *swarm.Options
 	var engineOptions *engine.Options
+	var bootstrapOptions *bootstrap.Options
 	if h.HostOptions != nil {
 		swarmOptions = h.HostOptions.SwarmOptions
 		engineOptions = h.HostOptions.EngineOptions
+		bootstrapOptions = h.HostOptions.BootstrapOptions
 	}
 
 	isMaster := false
@@ -409,6 +414,7 @@ func attemptGetHostState(h *host.Host, stateQueryChan chan<- HostListItem) {
 		URL:           url,
 		SwarmOptions:  swarmOptions,
 		EngineOptions: engineOptions,
+		BootstrapOptions: bootstrapOptions,
 		DockerVersion: dockerVersion,
 		Error:         hostError,
 		ResponseTime:  time.Now().Round(time.Millisecond).Sub(requestBeginning.Round(time.Millisecond)),

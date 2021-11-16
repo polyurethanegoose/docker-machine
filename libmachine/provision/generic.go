@@ -8,6 +8,7 @@ import (
 	"github.com/docker/machine/libmachine/auth"
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/engine"
+	"github.com/docker/machine/libmachine/bootstrap"
 	"github.com/docker/machine/libmachine/swarm"
 )
 
@@ -21,6 +22,7 @@ type GenericProvisioner struct {
 	Driver            drivers.Driver
 	AuthOptions       auth.Options
 	EngineOptions     engine.Options
+	BootstrapOptions  bootstrap.Options
 	SwarmOptions      swarm.Options
 }
 

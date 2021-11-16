@@ -14,6 +14,7 @@ import (
 	"github.com/docker/machine/libmachine/drivers/plugin/localbinary"
 	"github.com/docker/machine/libmachine/drivers/rpc"
 	"github.com/docker/machine/libmachine/engine"
+	"github.com/docker/machine/libmachine/bootstrap"
 	"github.com/docker/machine/libmachine/host"
 	"github.com/docker/machine/libmachine/log"
 	"github.com/docker/machine/libmachine/mcnerror"
@@ -78,6 +79,9 @@ func (api *Client) NewHost(driverName string, rawDriver []byte) (*host.Host, err
 				InstallURL:    drivers.DefaultEngineInstallURL,
 				StorageDriver: "overlay2",
 				TLSVerify:     true,
+			},
+			BootstrapOptions: &bootstrap.Options{
+				InstallURL: drivers.DefaultBootstrapInstallURL,
 			},
 			SwarmOptions: &swarm.Options{
 				Host:     "tcp://0.0.0.0:3376",
@@ -172,7 +176,7 @@ func (api *Client) performCreate(h *host.Host) error {
 	}
 
 	log.Infof("Provisioning with %s...", provisioner.String())
-	if err := provisioner.Provision(*h.HostOptions.SwarmOptions, *h.HostOptions.AuthOptions, *h.HostOptions.EngineOptions); err != nil {
+	if err := provisioner.Provision(*h.HostOptions.SwarmOptions, *h.HostOptions.AuthOptions, *h.HostOptions.EngineOptions, *h.HostOptions.BootstrapOptions); err != nil {
 		return fmt.Errorf("Error running provisioning: %s", err)
 	}
 

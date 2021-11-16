@@ -6,6 +6,7 @@ import (
 	"github.com/docker/machine/drivers/fakedriver"
 	"github.com/docker/machine/libmachine/auth"
 	"github.com/docker/machine/libmachine/engine"
+	"github.com/docker/machine/libmachine/bootstrap"
 	"github.com/docker/machine/libmachine/provision/provisiontest"
 	"github.com/docker/machine/libmachine/swarm"
 )
@@ -37,7 +38,7 @@ func TestUbuntuSystemdCompatibleWithHost(t *testing.T) {
 func TestUbuntuSystemdDefaultStorageDriver(t *testing.T) {
 	p := NewUbuntuSystemdProvisioner(&fakedriver.Driver{}).(*UbuntuSystemdProvisioner)
 	p.SSHCommander = provisiontest.NewFakeSSHCommander(provisiontest.FakeSSHCommanderOptions{})
-	p.Provision(swarm.Options{}, auth.Options{}, engine.Options{})
+	p.Provision(swarm.Options{}, auth.Options{}, engine.Options{}, bootstrap.Options{})
 	if p.EngineOptions.StorageDriver != "overlay2" {
 		t.Fatal("Default storage driver should be overlay2")
 	}

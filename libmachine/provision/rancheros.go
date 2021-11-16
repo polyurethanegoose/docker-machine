@@ -10,6 +10,7 @@ import (
 	"github.com/docker/machine/libmachine/auth"
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/engine"
+	"github.com/docker/machine/libmachine/bootstrap"
 	"github.com/docker/machine/libmachine/log"
 	"github.com/docker/machine/libmachine/mcnutils"
 	"github.com/docker/machine/libmachine/provision/pkgaction"
@@ -92,12 +93,13 @@ func (provisioner *RancherProvisioner) Package(name string, action pkgaction.Pac
 	return nil
 }
 
-func (provisioner *RancherProvisioner) Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options) error {
+func (provisioner *RancherProvisioner) Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options, bootstrapOptions bootstrap.Options) error {
 	log.Debugf("Running RancherOS provisioner on %s", provisioner.Driver.GetMachineName())
 
 	provisioner.SwarmOptions = swarmOptions
 	provisioner.AuthOptions = authOptions
 	provisioner.EngineOptions = engineOptions
+	provisioner.BootstrapOptions = bootstrapOptions
 	swarmOptions.Env = engineOptions.Env
 
 	if provisioner.EngineOptions.StorageDriver == "" {

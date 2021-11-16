@@ -13,6 +13,7 @@ import (
 	"github.com/docker/machine/libmachine/auth"
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/engine"
+	"github.com/docker/machine/libmachine/bootstrap"
 	"github.com/docker/machine/libmachine/log"
 	"github.com/docker/machine/libmachine/mcnutils"
 	"github.com/docker/machine/libmachine/provision/pkgaction"
@@ -38,6 +39,7 @@ type Boot2DockerProvisioner struct {
 	Driver        drivers.Driver
 	AuthOptions   auth.Options
 	EngineOptions engine.Options
+	BootstrapOptions bootstrap.Options
 	SwarmOptions  swarm.Options
 }
 
@@ -215,7 +217,7 @@ You also might want to clear any VirtualBox host only interfaces you are not usi
 	}
 }
 
-func (provisioner *Boot2DockerProvisioner) Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options) error {
+func (provisioner *Boot2DockerProvisioner) Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options, bootstrapOptions bootstrap.Options) error {
 	var (
 		err error
 	)
@@ -229,6 +231,7 @@ func (provisioner *Boot2DockerProvisioner) Provision(swarmOptions swarm.Options,
 	provisioner.SwarmOptions = swarmOptions
 	provisioner.AuthOptions = authOptions
 	provisioner.EngineOptions = engineOptions
+	provisioner.BootstrapOptions = bootstrapOptions
 	swarmOptions.Env = engineOptions.Env
 
 	if provisioner.EngineOptions.StorageDriver == "" {

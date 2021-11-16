@@ -1,6 +1,17 @@
-# ⚠️This is a fork of Docker Machine ⚠
+# ⚠️ This is a fork of a fork of Docker Machine ⚠
 
-This is a fork of Docker Machine maintained by GitLab for [fixing critical bugs](https://docs.gitlab.com/runner/executors/docker_machine.html#forked-version-of-docker-machine).
+This is a fork of a fork of Docker Machine maintained by GitLab for [fixing critical bugs](https://docs.gitlab.com/runner/executors/docker_machine.html#forked-version-of-docker-machine).
+
+This fork contains small changes for my own purposes. I've started by updating
+the list of AWS Ubuntu AMIs and added new parameter, `bootstrap-install-url`.
+When provisioning completes succesfully machine will download script specified
+by this parameter and run it with a `/bin/sh` this is highly irresponsible so
+be aware. Oh, and I'm using [podman](https://podman.io/) to build project and
+this is reflected in build script.
+
+I'm no professional programmer so this fork is probably far from ideal. But works.
+
+#### Rest of the original readme:
 
 For a new merge request to be considered, the following questions must be answered:
 

@@ -34,6 +34,14 @@ func installDockerGeneric(p Provisioner, baseURL string) error {
 	return nil
 }
 
+func provisionSystemGeneric(p Provisioner, baseURL string) error {
+	if output, err := p.SSHCommand(fmt.Sprintf("curl -sSL %s | sh -", baseURL)); err != nil {
+		return fmt.Errorf("error bootstrapping system: %s", output)
+	}
+
+	return nil
+}
+
 func makeDockerOptionsDir(p Provisioner) error {
 	dockerDir := p.GetDockerOptionsDir()
 	if _, err := p.SSHCommand(fmt.Sprintf("sudo mkdir -p %s", dockerDir)); err != nil {

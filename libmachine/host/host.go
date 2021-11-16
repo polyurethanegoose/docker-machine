@@ -7,6 +7,7 @@ import (
 	"github.com/docker/machine/libmachine/cert"
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/engine"
+	"github.com/docker/machine/libmachine/bootstrap"
 	"github.com/docker/machine/libmachine/log"
 	"github.com/docker/machine/libmachine/mcndockerclient"
 	"github.com/docker/machine/libmachine/mcnerror"
@@ -51,6 +52,7 @@ type Options struct {
 	Memory        int
 	Disk          int
 	EngineOptions *engine.Options
+	BootstrapOptions *bootstrap.Options
 	SwarmOptions  *swarm.Options
 	AuthOptions   *auth.Options
 }
@@ -265,7 +267,7 @@ func (h *Host) ConfigureAuth() error {
 	// and modularity of the provisioners should be).
 	//
 	// Call provision to re-provision the certs properly.
-	return provisioner.Provision(swarm.Options{}, *h.HostOptions.AuthOptions, *h.HostOptions.EngineOptions)
+	return provisioner.Provision(swarm.Options{}, *h.HostOptions.AuthOptions, *h.HostOptions.EngineOptions, *h.HostOptions.BootstrapOptions)
 }
 
 func (h *Host) ConfigureAllAuth() error {
@@ -282,5 +284,5 @@ func (h *Host) Provision() error {
 		return err
 	}
 
-	return provisioner.Provision(*h.HostOptions.SwarmOptions, *h.HostOptions.AuthOptions, *h.HostOptions.EngineOptions)
+	return provisioner.Provision(*h.HostOptions.SwarmOptions, *h.HostOptions.AuthOptions, *h.HostOptions.EngineOptions, *h.HostOptions.BootstrapOptions)
 }

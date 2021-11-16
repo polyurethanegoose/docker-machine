@@ -22,6 +22,7 @@ import (
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/drivers/rpc"
 	"github.com/docker/machine/libmachine/engine"
+	"github.com/docker/machine/libmachine/bootstrap"
 	"github.com/docker/machine/libmachine/host"
 	"github.com/docker/machine/libmachine/log"
 	"github.com/docker/machine/libmachine/mcnerror"
@@ -46,6 +47,12 @@ var (
 			Usage:  "Custom URL to use for engine installation",
 			Value:  drivers.DefaultEngineInstallURL,
 			EnvVar: "MACHINE_DOCKER_INSTALL_URL",
+		},
+		cli.StringFlag{
+			Name:   "bootstrap-install-url",
+			Usage:  "Custom URL to use for provision system",
+			Value:  drivers.DefaultBootstrapInstallURL,
+			EnvVar: "BOOSTRAP_INSTALL_URL",
 		},
 		cli.StringSliceFlag{
 			Name:  "engine-opt",
@@ -189,6 +196,9 @@ func cmdCreateInner(c CommandLine, api libmachine.API) error {
 			StorageDriver:    c.String("engine-storage-driver"),
 			TLSVerify:        true,
 			InstallURL:       c.String("engine-install-url"),
+		},
+		BootstrapOptions: &bootstrap.Options{
+			InstallURL:       c.String("bootstrap-install-url"),
 		},
 		SwarmOptions: &swarm.Options{
 			IsSwarm:            c.Bool("swarm") || c.Bool("swarm-master"),

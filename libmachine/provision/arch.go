@@ -6,6 +6,7 @@ import (
 	"github.com/docker/machine/libmachine/auth"
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/engine"
+	"github.com/docker/machine/libmachine/bootstrap"
 	"github.com/docker/machine/libmachine/log"
 	"github.com/docker/machine/libmachine/mcnutils"
 	"github.com/docker/machine/libmachine/provision/pkgaction"
@@ -88,10 +89,11 @@ func (provisioner *ArchProvisioner) dockerDaemonResponding() bool {
 	return true
 }
 
-func (provisioner *ArchProvisioner) Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options) error {
+func (provisioner *ArchProvisioner) Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options, bootstrapOptions bootstrap.Options) error {
 	provisioner.SwarmOptions = swarmOptions
 	provisioner.AuthOptions = authOptions
 	provisioner.EngineOptions = engineOptions
+	provisioner.BootstrapOptions = bootstrapOptions
 	swarmOptions.Env = engineOptions.Env
 
 	storageDriver, err := decideStorageDriver(provisioner, "overlay2", engineOptions.StorageDriver)

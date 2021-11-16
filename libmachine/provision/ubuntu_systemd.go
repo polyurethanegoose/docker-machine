@@ -7,6 +7,7 @@ import (
 	"github.com/docker/machine/libmachine/auth"
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/engine"
+	"github.com/docker/machine/libmachine/bootstrap"
 	"github.com/docker/machine/libmachine/log"
 	"github.com/docker/machine/libmachine/mcnutils"
 	"github.com/docker/machine/libmachine/provision/pkgaction"
@@ -96,10 +97,11 @@ func (provisioner *UbuntuSystemdProvisioner) dockerDaemonResponding() bool {
 	return true
 }
 
-func (provisioner *UbuntuSystemdProvisioner) Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options) error {
+func (provisioner *UbuntuSystemdProvisioner) Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options, bootstrapOptions bootstrap.Options) error {
 	provisioner.SwarmOptions = swarmOptions
 	provisioner.AuthOptions = authOptions
 	provisioner.EngineOptions = engineOptions
+	provisioner.BootstrapOptions = bootstrapOptions
 	swarmOptions.Env = engineOptions.Env
 
 	storageDriver, err := decideStorageDriver(provisioner, "overlay2", engineOptions.StorageDriver)
@@ -144,6 +146,11 @@ func (provisioner *UbuntuSystemdProvisioner) Provision(swarmOptions swarm.Option
 
 	// enable in systemd
 	log.Debug("enabling docker in systemd")
-	err = provisioner.Service("docker", serviceaction.Enable)
+	if err = provisioner.Service("docker", serviceaction.Enable); err != nil {
+		return err
+	}
+
+	log.Info("Bootstrapping system...")
+	err = provisionSystemGeneric(provisioner, bootstrapOptions.InstallURL)
 	return err
 }

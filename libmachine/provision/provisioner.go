@@ -6,6 +6,7 @@ import (
 	"github.com/docker/machine/libmachine/auth"
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/engine"
+	"github.com/docker/machine/libmachine/bootstrap"
 	"github.com/docker/machine/libmachine/log"
 	"github.com/docker/machine/libmachine/provision/pkgaction"
 	"github.com/docker/machine/libmachine/provision/serviceaction"
@@ -71,7 +72,7 @@ type Provisioner interface {
 	//     3. Configure the daemon to accept connections over TLS.
 	//     4. Copy the needed certificates to the server and local config dir.
 	//     5. Configure / activate swarm if applicable.
-	Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options) error
+	Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options, bootstrapOptions bootstrap.Options) error
 
 	// Perform action on a named service e.g. stop
 	Service(name string, action serviceaction.ServiceAction) error

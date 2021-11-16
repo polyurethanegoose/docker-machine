@@ -8,6 +8,7 @@ import (
 	"github.com/docker/machine/libmachine/auth"
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/engine"
+	"github.com/docker/machine/libmachine/bootstrap"
 	"github.com/docker/machine/libmachine/log"
 	"github.com/docker/machine/libmachine/mcnutils"
 	"github.com/docker/machine/libmachine/provision/pkgaction"
@@ -71,10 +72,11 @@ Environment={{range .EngineOptions.Env}}{{ printf "%q" . }} {{end}}
 	}, nil
 }
 
-func (p *GoogleCOSProvisioner) Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options) error {
+func (p *GoogleCOSProvisioner) Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options, bootstrapOptions bootstrap.Options) error {
 	p.SwarmOptions = swarmOptions
 	p.AuthOptions = authOptions
 	p.EngineOptions = engineOptions
+	p.BootstrapOptions = bootstrapOptions
 	swarmOptions.Env = engineOptions.Env
 
 	log.Debug("Setting hostname")
